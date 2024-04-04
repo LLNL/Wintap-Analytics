@@ -75,4 +75,14 @@ Mac/Linux:
 1. Activate the pipenv shell: `pipenv shell`
 
 Windows:
-1. some windows instructions....
+1. Install python (www.python.org/downloads)
+    1. Run custom installation
+        1. ensure pip gets installed
+        1. select "Add python to environment variables"
+        1. optionally install for all users
+    1. Open cmd prompt
+        1. Validate python installed and in path by running python --version 
+        1. Install pipenv: `python -m pip install pipenv`
+        1. Setup pipenv, run: python -m pipenv install
+        1. Activate the pipenv shell: `pipenv shell`
+
