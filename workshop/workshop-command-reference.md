@@ -87,8 +87,8 @@ Second, follow option 1 or option 2 to complete the python environment setup.
     1. Open cmd prompt
         1. Validate python installed and in path by running python --version 
         1. Install pipenv: `python -m pip install pipenv`
-        1. Setup pipenv, run: python -m pipenv install
-        1. Activate the pipenv shell: `pipenv shell`
+        1. Setup pipenv, run: `python -m pipenv install`
+        1. Activate the pipenv shell: `python -m pipenv shell`
 
 
 ## Additional Data Exploration Tools 
