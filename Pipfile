@@ -5,4 +5,5 @@ verify_ssl = true
 
 [packages]
 duckdb = "*"
+duckdb-engine = "*"
 magic_duckdb = "*"

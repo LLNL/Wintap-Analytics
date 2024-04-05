@@ -70,7 +70,7 @@ Second, follow option 1 or option 2 to complete the python environment setup.
 
 1. Create a new conda environment for wintap analytics: `conda create -n wintap-analytics python=3.10`
 1. Activate the conda environment: `conda activate wintap-analytics​`
-1. Install the requirements `pip install -r requirements.txt`
+1. Install the requirements `make venv`
 
 ### Option 2: Using System Python 3.10
 
