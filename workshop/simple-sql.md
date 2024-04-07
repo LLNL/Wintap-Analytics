@@ -119,10 +119,54 @@ group by all
 order by all
 ```
 
-process-net-process
-    find example with 2 hosts
+### Potentially interesting inter-host communication
+Let's look for network connections between hosts that we have instrumented. the goal is to look for interesting cases where we can confirm the processes responsible for each end of the connection.
 
+In the Wintap data model, we create a key for network 5-tuples "conn_id" (a hash of local ip/port -> remote ip/port, protocol). In this definition, local/remote are relative to the host recording the data. As an example, that means for a given connection, this would be the data:
 
+```
+SELECT hostname, process_name, protocol, local_ip_addr, local_port, remote_ip_addr, remote_port
+from process_net_conn
+where conn_id='F6A1A412FE8988B22F0CD1295B7117C0'
+;
+```
+
+|Hostname|process_name|protocol|local_ip_addr|local_port|remote_ip_addr|remote_port|
+|--------|------------|--------|-------------|----------|--------------|-----------|
+|ACME-HH-HGC|ssh.exe|TCP|172.31.37.19|62435|172.31.34.133|22|
+|ACME-DC1|sshd.exe|TCP|172.31.34.133|22|172.31.37.19|62435|
+
+So now the goal is to join those 2 rows into a single row representing process->network->process. And that gets done with:
+```
+SELECT
+	l.hostname,
+	l.process_name,
+	l.protocol,
+	l.local_ip_addr,
+	l.remote_ip_addr,
+	count(distinct l.local_port) num_local_ports,
+	count(distinct l.remote_port) num_remote_ports,
+	mode(l.local_port) common_local_port,
+	mode(l.remote_port) common_remote_port,
+	r.hostname,
+	r.process_name,
+	count(*) num_rows,
+	first(l.conn_id) example_conn_id
+from
+	process_net_conn l
+join process_net_conn r on
+	l.conn_id = r.conn_id
+	and l.hostname <> r.hostname
+where l.process_name not in ('lsass.exe','svchost.exe')
+and r.process_name not in ('lsass.exe','svchost.exe')
+and l.local_port != 53
+and l.remote_port != 53
+group by all
+order by l.process_name
+;
+```
+
+Notice the filter conditions to reduce "noisy" processes and ports. It is subjective as to what is considered noisy or irrelevant.
 
 # Resources
 [^1]: https://github.com/LOLBAS-Project/LOLBAS
