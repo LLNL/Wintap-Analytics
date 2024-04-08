@@ -10,7 +10,11 @@ show all tables;
 
 Use a query to get tables and row counts
 ```sql
-select table_name, estimated_size, column_count from duckdb_tables order by all;
+SELECT
+    table_name,
+    estimated_size,
+    column_count
+FROM duckdb_tables ORDER BY ALL;
 ```
 
 Display columns and simple statistics about a single table
@@ -24,44 +28,65 @@ The process_uber_summary table has every process execution, along with summarize
 
 ### How many processes across the hosts? And lets gets some additional features about events and labels.
 ```sql
-select hostname, 
-  count(distinct process_name) uniq_processes,
-  count(*) total_processes,
-  sum(reg_reads) reg_reads,
-  sum(reg_writes) reg_writes,
-  sum(read_events) file_reads,
-  sum(write_events) file_writes,
-  sum(net_total_events) net_total_events,
-  sum(net_total_size) net_total_size,
-  sum(tcp_accept_count) tcp_accept_events,
-  sum(tcp_connect_count) tcp_connect_events,
-  sum(dll_num_uniq_files) dll_files,
-  sum(total_sigma_hits) total_sigma_hits,
-  sum(label_num_hits) label_num_hits,
-  count(distinct label_source) uniq_label_source,
-  sum(lolbas_num_rows) lolbas_hits,
-  sum(mitre_num_rows) mitre_hits
-from process_uber_summary
-group by all 
-order by all
+SELECT
+    hostname,
+    count(DISTINCT process_name) AS uniq_processes,
+    count(*) AS total_processes,
+    sum(reg_reads) AS reg_reads,
+    sum(reg_writes) AS reg_writes,
+    sum(read_events) AS file_reads,
+    sum(write_events) AS file_writes,
+    sum(net_total_events) AS net_total_events,
+    sum(net_total_size) AS net_total_size,
+    sum(tcp_accept_count) AS tcp_accept_events,
+    sum(tcp_connect_count) AS tcp_connect_events,
+    sum(dll_num_uniq_files) AS dll_files,
+    sum(total_sigma_hits) AS total_sigma_hits,
+    sum(label_num_hits) AS label_num_hits,
+    count(DISTINCT label_source) AS uniq_label_source,
+    sum(lolbas_num_rows) AS lolbas_hits,
+    sum(mitre_num_rows) AS mitre_hits
+FROM process_uber_summary
+GROUP BY ALL
+ORDER BY ALL
+
 ;
 ```
 
 ### Summary by Process name
 ```sql
-select process_name, count(distinct hostname) num_hosts, count(distinct user_name) num_users, count(*) num_executions
-from process group by all order by all
+SELECT
+    process_name,
+    count(DISTINCT hostname) AS num_hosts,
+    count(DISTINCT user_name) AS num_users,
+    count(*) AS num_executions
+FROM process GROUP BY ALL ORDER BY ALL
+
 ;
 ```
 
 ### Processes with Multiple MD5's
 ```sql
-select process_name, count(distinct file_md5) uniq_md5 from process group by all having uniq_md5>1;
+SELECT
+    process_name,
+    count(DISTINCT file_md5) AS uniq_md5
+FROM process
+GROUP BY ALL
+HAVING uniq_md5 > 1;
 ```
 
 ### MD5s with Multiple Names
 ```sql
-select file_md5, process_name, hostname, user_name, count(*) from process where file_md5='E7A6B1F51EFB405287A8048CFA4690F4' group by all order by all
+SELECT
+    file_md5,
+    process_name,
+    hostname,
+    user_name,
+    count(*)
+FROM process
+WHERE file_md5 = 'E7A6B1F51EFB405287A8048CFA4690F4'
+GROUP BY ALL
+ORDER BY ALL
 ;
 ```
 
@@ -79,44 +104,52 @@ Process paths are defined here as up to the root process. We're still experiment
 
 ### What are the roots of processes? They *should* all be ntoskrnl.exe
 ```sql
-select
+SELECT
     -- Slice the list to exclude the child process
-	ptree_list_tuples[-1:][1]['process_name'] path_root,
-	count(distinct ptree_list_tuples[-1:][1]['pid_hash']) uniq_root_pid_hash,
-	median(level) median_path_depth,
-	max(level) max_path_depth,
-	count(*) num_process
-from
-	process_path
-group by all
-order by all
+    ptree_list_tuples[-1:][1]['process_name'] AS path_root,
+    count(DISTINCT ptree_list_tuples[-1:][1]['pid_hash']) AS uniq_root_pid_hash,
+    median(level) AS median_path_depth,
+    max(level) AS max_path_depth,
+    count(*) AS num_process
+FROM
+    process_path
+GROUP BY ALL
+ORDER BY ALL
+
 ;
 ```
 
 ### Paths relative to the executable, or, how many different ways is an executable spawned?
 ```sql
-select
-	p.process_name,
-	ptree_list_tuples[2:2][1]['process_name'] parent,
-	ptree_list_tuples[3:3][1]['process_name'] grand_parent,
-	ptree_list_tuples[4:4][1]['process_name'] great_grand_parent,
-    max(p.level) max_depth,
-    count(distinct hostname) uniq_hosts,
-	count(*) num_executions
-from process_path p
-group by all
-order by process_name, parent, grand_parent, great_grand_parent
+SELECT
+    p.process_name,
+    p.ptree_list_tuples[2:2][1]['process_name'] AS parent,
+    p.ptree_list_tuples[3:3][1]['process_name'] AS grand_parent,
+    p.ptree_list_tuples[4:4][1]['process_name'] AS great_grand_parent,
+    max(p.level) AS max_depth,
+    count(DISTINCT p.hostname) AS uniq_hosts,
+    count(*) AS num_executions
+FROM process_path AS p
+GROUP BY ALL
+ORDER BY p.process_name, parent, grand_parent, great_grand_parent
+
 ```
 
 ### Processes using a certain file/port/ip
 
 _Ouch!_ This dataset has no file activity!
 ```sql
-select process_name, protocol, remote_ip_addr, remote_port, count(*)
-from process_net_conn
-where remote_port=22
-group by all
-order by all
+SELECT
+    process_name,
+    protocol,
+    remote_ip_addr,
+    remote_port,
+    count(*)
+FROM process_net_conn
+WHERE remote_port = 22
+GROUP BY ALL
+ORDER BY ALL
+
 ```
 
 ### Potentially interesting inter-host communication
@@ -125,9 +158,16 @@ Let's look for network connections between hosts that we have instrumented. the 
 In the Wintap data model, we create a key for network 5-tuples "conn_id" (a hash of local ip/port -> remote ip/port, protocol). In this definition, local/remote are relative to the host recording the data. As an example, that means for a given connection, this would be the data:
 
 ```sql
-SELECT hostname, process_name, protocol, local_ip_addr, local_port, remote_ip_addr, remote_port
-from process_net_conn
-where conn_id='F6A1A412FE8988B22F0CD1295B7117C0'
+SELECT
+    hostname,
+    process_name,
+    protocol,
+    local_ip_addr,
+    local_port,
+    remote_ip_addr,
+    remote_port
+FROM process_net_conn
+WHERE conn_id = 'F6A1A412FE8988B22F0CD1295B7117C0'
 ;
 ```
 
@@ -139,30 +179,32 @@ where conn_id='F6A1A412FE8988B22F0CD1295B7117C0'
 So now the goal is to join those 2 rows into a single row representing process->network->process. And that gets done with:
 ```sql
 SELECT
-	l.hostname,
-	l.process_name,
-	l.protocol,
-	l.local_ip_addr,
-	l.remote_ip_addr,
-	count(distinct l.local_port) num_local_ports,
-	count(distinct l.remote_port) num_remote_ports,
-	mode(l.local_port) common_local_port,
-	mode(l.remote_port) common_remote_port,
-	r.hostname,
-	r.process_name,
-	count(*) num_rows,
-	first(l.conn_id) example_conn_id
-from
-	process_net_conn l
-join process_net_conn r on
-	l.conn_id = r.conn_id
-	and l.hostname <> r.hostname
-where l.process_name not in ('lsass.exe','svchost.exe')
-and r.process_name not in ('lsass.exe','svchost.exe')
-and l.local_port != 53
-and l.remote_port != 53
-group by all
-order by l.process_name
+    l.hostname,
+    l.process_name,
+    l.protocol,
+    l.local_ip_addr,
+    l.remote_ip_addr,
+    r.hostname,
+    r.process_name,
+    count(DISTINCT l.local_port) AS num_local_ports,
+    count(DISTINCT l.remote_port) AS num_remote_ports,
+    mode(l.local_port) AS common_local_port,
+    mode(l.remote_port) AS common_remote_port,
+    count(*) AS num_rows,
+    first(l.conn_id) AS example_conn_id
+FROM
+    process_net_conn AS l
+INNER JOIN process_net_conn AS r
+    ON
+        l.conn_id = r.conn_id
+        AND l.hostname <> r.hostname
+WHERE
+    l.process_name NOT IN ('lsass.exe', 'svchost.exe')
+    AND r.process_name NOT IN ('lsass.exe', 'svchost.exe')
+    AND l.local_port <> 53
+    AND l.remote_port <> 53
+GROUP BY ALL
+ORDER BY l.process_name
 ;
 ```
 
