@@ -3,7 +3,17 @@ name = "pypi"
 url = "https://pypi.org/simple"
 verify_ssl = true
 
+[dev-packages]
+black = {version = "*", extras = ["jupyter"]}
+isort = "*"
+
 [packages]
 duckdb = "*"
 duckdb-engine = "*"
 magic_duckdb = "*"
+networkx = "*"
+ipykernel = "*"
+jinja2 = "*"
+ipycytoscape = "*"
+matplotlib = "*"
+scipy = "*"

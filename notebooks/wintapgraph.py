@@ -67,11 +67,12 @@ def add_parent_child(g, processes):
     """
     cols = processes.columns
     for row in processes.fetchall():
-        g.add_edge(
-            row[cols.index("pid_hash")],
-            row[cols.index("parent_pid_hash")],
-            type="parent",
-        )
+        if row[cols.index("pid_hash")] and row[cols.index("parent_pid_hash")]:
+            g.add_edge(
+                row[cols.index("pid_hash")],
+                row[cols.index("parent_pid_hash")],
+                type="parent",
+            )
 
 
 def add_node(graph, idx, nodetype, label, attributes={}):
