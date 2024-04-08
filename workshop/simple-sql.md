@@ -49,7 +49,6 @@ SELECT
 FROM process_uber_summary
 GROUP BY ALL
 ORDER BY ALL
-
 ;
 ```
 
@@ -61,7 +60,6 @@ SELECT
     count(DISTINCT user_name) AS num_users,
     count(*) AS num_executions
 FROM process GROUP BY ALL ORDER BY ALL
-
 ;
 ```
 
@@ -115,7 +113,6 @@ FROM
     process_path
 GROUP BY ALL
 ORDER BY ALL
-
 ;
 ```
 
@@ -132,7 +129,7 @@ SELECT
 FROM process_path AS p
 GROUP BY ALL
 ORDER BY p.process_name, parent, grand_parent, great_grand_parent
-
+;
 ```
 
 ### Processes using a certain file/port/ip
@@ -149,7 +146,7 @@ FROM process_net_conn
 WHERE remote_port = 22
 GROUP BY ALL
 ORDER BY ALL
-
+;
 ```
 
 ### Potentially interesting inter-host communication
