@@ -4,17 +4,17 @@ The data model for Wintap is process centric. With that in mind, lets see what t
 
 ## A few DuckDB basics
 List all tables
-```
+```sql
 show all tables;
 ```
 
 Use a query to get tables and row counts
-```
+```sql
 select table_name, estimated_size, column_count from duckdb_tables order by all;
 ```
 
 Display columns and simple statistics about a single table
-```
+```sql
 summarize process_net_conn;
 ```
 
@@ -23,7 +23,7 @@ The process_uber_summary table has every process execution, along with summarize
 
 
 ### How many processes across the hosts? And lets gets some additional features about events and labels.
-```
+```sql
 select hostname, 
   count(distinct process_name) uniq_processes,
   count(*) total_processes,
@@ -48,19 +48,19 @@ order by all
 ```
 
 ### Summary by Process name
-```
+```sql
 select process_name, count(distinct hostname) num_hosts, count(distinct user_name) num_users, count(*) num_executions
 from process group by all order by all
 ;
 ```
 
 ### Processes with Multiple MD5's
-```
+```sql
 select process_name, count(distinct file_md5) uniq_md5 from process group by all having uniq_md5>1;
 ```
 
 ### MD5s with Multiple Names
-```
+```sql
 select file_md5, process_name, hostname, user_name, count(*) from process where file_md5='E7A6B1F51EFB405287A8048CFA4690F4' group by all order by all
 ;
 ```
@@ -78,7 +78,7 @@ Process paths are defined here as up to the root process. We're still experiment
 
 
 ### What are the roots of processes? They *should* all be ntoskrnl.exe
-```
+```sql
 select
     -- Slice the list to exclude the child process
 	ptree_list_tuples[-1:][1]['process_name'] path_root,
@@ -94,7 +94,7 @@ order by all
 ```
 
 ### Paths relative to the executable, or, how many different ways is an executable spawned?
-```
+```sql
 select
 	p.process_name,
 	ptree_list_tuples[2:2][1]['process_name'] parent,
@@ -111,7 +111,7 @@ order by process_name, parent, grand_parent, great_grand_parent
 ### Processes using a certain file/port/ip
 
 _Ouch!_ This dataset has no file activity!
-```
+```sql
 select process_name, protocol, remote_ip_addr, remote_port, count(*)
 from process_net_conn
 where remote_port=22
@@ -124,7 +124,7 @@ Let's look for network connections between hosts that we have instrumented. the 
 
 In the Wintap data model, we create a key for network 5-tuples "conn_id" (a hash of local ip/port -> remote ip/port, protocol). In this definition, local/remote are relative to the host recording the data. As an example, that means for a given connection, this would be the data:
 
-```
+```sql
 SELECT hostname, process_name, protocol, local_ip_addr, local_port, remote_ip_addr, remote_port
 from process_net_conn
 where conn_id='F6A1A412FE8988B22F0CD1295B7117C0'
@@ -137,7 +137,7 @@ where conn_id='F6A1A412FE8988B22F0CD1295B7117C0'
 |ACME-DC1|sshd.exe|TCP|172.31.34.133|22|172.31.37.19|62435|
 
 So now the goal is to join those 2 rows into a single row representing process->network->process. And that gets done with:
-```
+```sql
 SELECT
 	l.hostname,
 	l.process_name,

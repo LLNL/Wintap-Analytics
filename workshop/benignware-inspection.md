@@ -39,7 +39,7 @@ A subset of the NTDIS labels:
 ### Example of a small set of activity surrounding "Shadow Copy of NTDIS"
 This is a bespoke query intended to tease out a bit of context surrounding the act of leverging shadow copy to get a copy of the NTDIS file. The import thing to note is how we can start to build up a graph of the process, file and network activity.
 
-```
+```sql
 select * from (
   select p.first_seen,node_type, p.os_pid , p.parent_os_pid, annotation, concat_ws(' ',p.process_name, p.args) as label
   from labels_graph_nodes l
