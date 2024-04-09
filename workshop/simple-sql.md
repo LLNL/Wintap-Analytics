@@ -176,13 +176,13 @@ WHERE conn_id = 'F6A1A412FE8988B22F0CD1295B7117C0'
 So now the goal is to join those 2 rows into a single row representing process->network->process. And that gets done with:
 ```sql
 SELECT
-    l.hostname,
-    l.process_name,
+    l.hostname AS local_hostname,
+    l.process_name AS local_process_name,
     l.protocol,
     l.local_ip_addr,
     l.remote_ip_addr,
-    r.hostname,
-    r.process_name,
+    r.hostname AS remote_hostname,
+    r.process_name AS remote_process_name,
     count(DISTINCT l.local_port) AS num_local_ports,
     count(DISTINCT l.remote_port) AS num_remote_ports,
     mode(l.local_port) AS common_local_port,
