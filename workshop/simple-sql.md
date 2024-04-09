@@ -196,16 +196,28 @@ INNER JOIN process_net_conn AS r
         l.conn_id = r.conn_id
         AND l.hostname <> r.hostname
 WHERE
-    l.process_name NOT IN ('lsass.exe', 'svchost.exe')
-    AND r.process_name NOT IN ('lsass.exe', 'svchost.exe')
-    AND l.local_port <> 53
-    AND l.remote_port <> 53
+    l.conn_id = 'F6A1A412FE8988B22F0CD1295B7117C0'
 GROUP BY ALL
 ORDER BY l.process_name
 ;
 ```
+|Hostname|process_name|protocol|local_ip_addr|remote_ip_addr|Hostname|process_name|num_local_ports|num_remote_ports|common_local_port|common_remote_port|num_rows|example_conn_id|
+|--------|------------|--------|-------------|--------------|--------|------------|---------------|----------------|-----------------|------------------|--------|---------------|
+|ACME-HH-HGC|ssh.exe|TCP|172.31.37.19|172.31.34.133|ACME-DC1|sshd.exe|1|1|62435|22|1|F6A1A412FE8988B22F0CD1295B7117C0|
+|ACME-DC1|sshd.exe|TCP|172.31.34.133|172.31.37.19|ACME-HH-HGC|ssh.exe|1|1|22|62435|1|F6A1A412FE8988B22F0CD1295B7117C0|
 
-Notice the filter conditions to reduce "noisy" processes and ports. It is subjective as to what is considered noisy or irrelevant.
+Notice that we now have the process to process link in a single row and from each processes perspective. Further manipulation can be done to reduce to a single, bi-directional link or several permuations as your analysis requires.
+
+#### Tip
+The above queries restrict to a single 5-tuple (conn_id) to help explain the relationships. To broaden the view, try the following filter condition in the JOIN query. Notice the filter conditions to reduce "noisy" processes and ports. It is subjective as to what is considered noisy or irrelevant.
+
+```sql
+WHERE
+    l.process_name NOT IN ('lsass.exe', 'svchost.exe')
+    AND r.process_name NOT IN ('lsass.exe', 'svchost.exe')
+    AND l.local_port <> 53
+    AND l.remote_port <> 53
+```
 
 # Resources
 [^1]: https://github.com/LOLBAS-Project/LOLBAS
