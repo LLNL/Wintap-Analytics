@@ -7,13 +7,13 @@ This is a collection of scripts / commands that are used in the workshop. They a
 ### InternetProcess: a process that connects to an internet address
 
 ```sql
-INSERT INTO InternetProcess​
-SELECT ip.PidHash, ip.ProcessName, Connection.*​
-FROM PATTERN[EVERY ip=WintapMessage(MessageType="Process" AND ActivityType='start')->​
-    Connection=WintapMessage(MessageType="TcpConnection" ​
-    AND PidHash=ip.PidHash​
-    AND TcpConnection.DestinationAddress <> '127.0.0.1' ​
-    AND TcpConnection.DestinationAddress NOT LIKE '192.168.%’)]​
+INSERT INTO InternetProcess
+SELECT ip.PidHash, ip.ProcessName, Connection.*
+FROM PATTERN[EVERY ip=WintapMessage(MessageType="Process" AND ActivityType='start')->
+    Connection=WintapMessage(MessageType="TcpConnection" 
+    AND PidHash=ip.PidHash
+    AND TcpConnection.DestinationAddress <> '127.0.0.1' 
+    AND TcpConnection.DestinationAddress NOT LIKE '192.168.%')]
 ```
 
 ### InternetProcessPersist: an InternetProcess that writes to any Run key in the registry  ​
@@ -21,7 +21,7 @@ FROM PATTERN[EVERY ip=WintapMessage(MessageType="Process" AND ActivityType='star
 ```sql
 INSERT INTO InternetProcessPersist​
 SELECT ip.ProcessName, reg.RegActivity.Path, ip.TcpConnection.DestinationAddress​
-FROM PATTERN[EVERY ip=InternetProcess -> ​
+FROM PATTERN[EVERY ip=InternetProcess ->
     reg=WintapMessage(MessageType="Registry" ​
     AND PidHash=ip.PidHash​
     AND RegActivity.Path LIKE '%\run')]​
