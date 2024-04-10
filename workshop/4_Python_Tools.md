@@ -11,7 +11,9 @@ Second, follow option 1 or option 2 to complete the python environment setup.
 ## Option 1: Using Conda
 
 **Windows/Mac/Linux**
-1. Create a new conda environment for wintap analytics: `conda create -n wintap-analytics python=3.10`
+1. Download miniconda (much lighter than full anaconda)
+    1. https://docs.anaconda.com/free/miniconda/miniconda-install/
+1. Create a new conda environment for wintap analytics: `conda create -n wintap-analytics python=3.10 make`
 1. Activate the conda environment: `conda activate wintap-analytics​`
 1. Install the requirements `make venv`
 
