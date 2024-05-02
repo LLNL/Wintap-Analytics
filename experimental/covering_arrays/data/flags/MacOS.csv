@@ -1,5 +1,5 @@
 program,flags
-whoami, -UPN -FQDN -USER -GROUPS -ALL -PRIV -CLAIMS -FO
-curl, --compressed --digest --disable-eprt --disable --dump-header --fail --globoff --no-buffer --silent --write-out
-netstat, -A -B -f -l -m -n -p -q -v -s
-ls, -@ -A -B -C -D -F -G -H -I -L -O -P -R -S -T -U -W -a -b -c -u -v -w -x -y -% -1
+whoami,-UPN -FQDN -USER -GROUPS -ALL -PRIV -CLAIMS -FO
+curl,--compressed --digest --disable-eprt --disable --dump-header --fail --globoff --no-buffer --silent --write-out
+netstat,-A -B -f -l -m -n -p -q -v -s
+ls,-@ -A -B -C -D -F -G -H -I -L -O -P -R -S -T -U -W -a -b -c -u -v -w -x -y -% -1
