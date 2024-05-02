@@ -2,7 +2,7 @@
 
 import argparse
 import os
-from utils import read_in_configs, get_util_flags, cover_array_commands, fuzz
+import utils
 
 def get_args():
     parser = argparse.ArgumentParser(description="Covering Array Fuzzer")
@@ -15,13 +15,13 @@ def get_args():
 def main(t, v, utility):
 
     # Generate commands based on the covering array
-    df = read_in_configs()
-    flags = get_util_flags(df, utility)
-    commands = cover_array_commands(utility, flags, t, v)
+    df = utils.read_in_configs(path_to_configs="./data/flags/Windows.csv")
+    flags = utils.get_util_flags(df, utility)
+    commands = utils.cover_array_commands(utility, flags, t, v)
 
     # Run the fuzzer with the generated commands
     try:
-        results = fuzz(commands)
+        results = utils.fuzz(commands)
         print(results)
     except Exception as e:
         print(f"An error occurred while running the fuzzer: {e}")
