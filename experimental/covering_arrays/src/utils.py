@@ -37,7 +37,7 @@ def get_util_flags(df, util):
     if len(flags) == 0:
         return []
 
-    return flags[0].split()
+    return flags[0].split(',')
 
 def sample_command(command_utility, command_flags, prob = 0.5):
     """
@@ -52,7 +52,9 @@ def sample_command(command_utility, command_flags, prob = 0.5):
         A randomly generated command as a string.
     """
     flags = [flag for flag in command_flags if random.random() < prob]
+    
     command = command_utility + " " + " ".join(flags)
+
     return command
 
 def sample_commands(n, command_utility, command_flags, prob = 0.5):

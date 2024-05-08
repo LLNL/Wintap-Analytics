@@ -1,6 +1,10 @@
 program,flags
-Certutil,-old -error -getreg -delreg -RecoverKey -MergePFX -get-roots -displayEccCurve -flushCache -syncWithWU -verifyCTL -f -split http://7-zip.org/a/7z1604-x64.exe 7zip.exe
-At,-id -delete -yes -time -every:date -next_date
-setres,-w # -h # -f -i
-netsh,-add -bridge -delete -dump -exec - firewall -help -http -interface -ipsec -lan -netio -nlm -set -show -trace -wfp
-netstat,-a -b -e -f -i -n -o -p -q -r -s -t -x -y -interval #
+At,"-id,-delete,-yes,01:23,-every:date,-next_date,netst"
+Certutil,"-old,-error,-getreg,-delreg,-RecoverKey,-MergePFX,-get-roots,-displayEccCurve,-flushCache,-syncWithWU,-verifyCTL,-f,-split http://7-zip.org/a/7z1604-x64.exe 7zip.exe"
+curl,"-q,-a,s,--http1.1,--http2,-i,-k,--ipv4"
+dir,"-a,-o s,-o d,-b,-s,-w,-p,-q,-d,-o,-t a,-n,-x,-c,-4,-r"
+ipconfig,"-all,-renew,-release,-renew6,-release6,-flushdns,-displaydns,-registerdns,-showclassid Local*,-setclassid Local Area Connection TEST"
+ping,"-t,-a,-n 5,-l 64,-f,-I 128,-v 100,-r 5,-s 3,-w 2000,-R,-4,-6"
+setres,"-w 256,-h 128,-f,-i"
+netsh,"-a,-c,-r,-u,-p Windows,-f"
+netstat,"-a,-b,-e,-f,-i,-n,-o,-p TCP,-q,-r,-s,-t,-x,-y"
