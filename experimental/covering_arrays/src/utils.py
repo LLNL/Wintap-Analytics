@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 
+import io
 import os
 import pandas as pd
 import random
+import requests
 import subprocess
+import zipfile
 
 def read_in_configs(path_to_configs="./data/flags/MacOS.csv"):
     if not os.path.exists(path_to_configs):
@@ -72,6 +75,39 @@ def sample_commands(n, command_utility, command_flags, prob = 0.5):
     """
     commands = [sample_command(command_utility, command_flags, prob) for _ in range(n)]
     return commands
+
+def download_covering_array(t, k, v, file_path = "./data/covering_arrays/"):
+    """
+    Downloads a covering array from the NIST website.
+
+    Args:
+        t: strength of covering array
+        k: number of factors in covering array
+        v: number of levels of each factor
+    """
+
+    url = f"https://math.nist.gov/coveringarrays/ipof/cas/t={t}/v={v}/ca.{t}.{v}%5E{k}.txt.zip"
+    
+    try:
+        r = requests.get(url)
+        r.raise_for_status()
+        z = zipfile.ZipFile(io.BytesIO(r.content))
+        z.extractall(file_path)
+        print("Covering array downloaded and extracted successfully.")
+    except requests.exceptions.HTTPError as err:
+        print(f"HTTP Error: {err}")
+        raise Exception("Failed to download the covering array.")
+    except requests.exceptions.RequestException as err:
+        print(f"Request exception: {err}")
+        raise Exception("Failed to download the covering array.")
+    except zipfile.BadZipFile as err:
+        print(f"Bad Zip File: {err}")
+        raise Exception("Failed to extract the covering array.")
+    except Exception as err:
+        print(f"Error: {err}")
+        raise Exception("An error occurred while downloading or extracting the covering array.")
+
+    return None
 
 def read_in_covering_array(t, k, v, file_path="./data/covering_arrays/"):
     """
