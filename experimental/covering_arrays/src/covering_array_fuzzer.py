@@ -9,24 +9,28 @@ def get_args():
     parser.add_argument("-t", type=int, help="Strength of the covering array")
     parser.add_argument("-v", type=int, help="Number of levels of each factor")
     parser.add_argument("-u", "--utility", type=str, help="Name of the utility")
-
+    parser.add_argument("-d", "--debug", action=argparse.BooleanOptionalAction, default=False,
+                         help="Include this flag to print debugging information")
+    
     return parser.parse_args()
 
-def main(t, v, utility):
+def main():
+
+    args = get_args()
+    utility = args.utility
 
     # Generate commands based on the covering array
     df = utils.read_in_configs(path_to_configs="./data/flags/Windows.csv")
     flags = utils.get_util_flags(df, utility)
-    commands = utils.cover_array_commands(utility, flags, t, v)
+    commands = utils.cover_array_commands(utility, flags, args.t, args.v)
 
     # Run the fuzzer with the generated commands
     try:
         results = utils.fuzz(commands)
-        print(results)
+        if (args.debug):
+            print(results.head(n = 10))
     except Exception as e:
         print(f"An error occurred while running the fuzzer: {e}")
 
 if __name__ == "__main__":
-
-    args = get_args()
-    main(args.t, args.v, args.utility)
+    main()
