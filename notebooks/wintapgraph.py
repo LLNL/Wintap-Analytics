@@ -25,7 +25,21 @@ select * from process
 {%- endfor -%}
 """
 
+#  Build all possible process trees by simply iterating over all rows
+def add_all(con):
+    sql="select pid_hash, parent_pid_hash, os_pid, process_name, process_started, process_term from process" # limit 1000000"
+    return con.sql(sql)
 
+def build_process_tree_graph(con, process_seeds, name=None):
+    if not name:
+        name = f"Process Tree Graph from a bunch of processes"
+
+    netg = nx.Graph(name=name)
+    add_proc_node_for(netg, process_seeds)
+    add_parent_child(netg, process_seeds)
+    return netg
+
+# Functions for building graphs
 def search_process_name_in(con, names):
     sql = Template(search_sql).render(names=names)
     print(sql)
