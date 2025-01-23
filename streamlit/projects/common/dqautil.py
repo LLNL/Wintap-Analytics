@@ -1,8 +1,10 @@
+import fsspec
+import s3fs
 import os
 from dataclasses import dataclass
 import logging
 from duckdb import CatalogException
-from typing import List
+from typing import List, ClassVar
 
 import duckdb
 import streamlit as st
@@ -11,6 +13,10 @@ import wintappy.datautils.rawutil as ru
 
 @dataclass
 class Dataset:
+    # Class vars
+    # Note: if needed in the future, this could be mondified to handle multiple FS types.
+    # Couldn't find a common interface or class for filesystems? Seems odd..
+    fs: ClassVar[object] = None
     # Instance vars
     name: str
     path: str
@@ -22,11 +28,26 @@ class Dataset:
     warnings: List[str] = None
 
     @classmethod
+    def getfs(cls, path):
+        if cls.fs == None:
+            logging.debug(f"Guessing filesystem: {path}")
+            # Strip the protocol off and create the FS with that.
+            protocol = path.split(':')[0]
+            if protocol == None:
+                # Assume its "file"
+                protocol = "file"
+            cls.fs = fsspec.filesystem(protocol)
+        return cls.fs
+
+    @classmethod
     def from_path(cls, path: str, name: str = None):
         if name == None:
-            name = os.path.basename(os.path.normpath(path))
+            name = path.split('/')[-1:][0]
 
-        agg_levels = os.listdir(path)
+        agg_levels = []
+        for dir in cls.getfs(path).ls(path):
+            if cls.getfs(path).isdir(path):
+                agg_levels.append(dir)
         databases = getdbs(path)
         return cls(
             name=name,
@@ -37,40 +58,60 @@ class Dataset:
         )
 
     def getdb(self, dbname):
-        return os.path.join(self.path, "dbhelpers", dbname)
+        return f"s3://{dbname}"
 
 
 def finddatasets(path):
+    myfs = Dataset.getfs(path)
     datasets = {}
-    for dir in os.listdir(path):
-        logging.debug(f"iterating dir {dir}")
-        dspath = os.path.join(path, dir)
-        logging.debug(f"dspath={dspath}")
+    for dir in myfs.ls(path):
+        print(f"iterating dir {dir}")
         # Assume every one is a dataset
-        if os.path.isdir(dspath):
-            ds = Dataset.from_path(dspath)
-            logging.debug(f"ds={ds}")
+        if myfs.isdir(dir):
+            ds = Dataset.from_path(dir)
+            print(f"ds={ds}")
             # For now, only datasets with databases defined are valid.
             if len(ds.databases) > 0:
+                print(type(datasets))
+                print(type(ds))
                 datasets[ds.name] = ds
         else:
-            logging.debug(f"{dspath} did not pass isdir check")
+            print(f"{dir} did not pass isdir check")
     return datasets
-
 
 def getdbs(path):
     # Load paths to any db files
     dbfiles = []
-    logging.debug(os.path.join(path, "dbhelpers"))
-    if os.path.isdir(os.path.join(path, "dbhelpers")):
+#    logging.debug('/'.join(path, "dbhelpers"))
+
+    if Dataset.getfs(path).isdir(f"{path}/dbhelpers"):
         logging.debug("dbhelpers exists")
-        for dbpath in os.listdir(os.path.join(path, "dbhelpers")):
-            logging.debug(f"dpath={dbpath}")
+        for dbpath in Dataset.getfs(path).ls(f"{path}/dbhelpers"):
+            print(f"  dpath={dbpath}")
             if dbpath.endswith(".db"):
                 dbfiles.append(dbpath)
     else:
         logging.debug("dbhelpers does not exist")
     return dbfiles
+
+def s3(con):
+    # Note: DuckDB uses different key names than the cli. 
+    #  Also, ENDPOINT can't have the protocol!
+    endpoint = os.environ['AWS_ENDPOINT_URL'].split('http://')[1]
+    s3info=f'''
+        CREATE OR REPLACE SECRET spk16s3 (
+            TYPE S3,
+            PROVIDER CREDENTIAL_CHAIN,
+            URL_STYLE 'path',
+            ENDPOINT '{endpoint}',
+            USE_SSL '{os.environ['DUCKDB_USE_SSL']}',
+            REGION '{os.environ['AWS_DEFAULT_REGION']}',
+            KEY_ID '{os.environ['AWS_ACCESS_KEY_ID']}',
+            SECRET '{os.environ['AWS_SECRET_ACCESS_KEY']}'
+        )
+    '''
+    print(s3info)
+    con.sql(s3info)
 
 
 def getdbcon(file):
@@ -80,6 +121,9 @@ def getdbcon(file):
     # List of markdown text for feedback
     msgs = ""
     try:
+        # Setup for the connection from DuckDB to S3
+        if file.startswith('s3://'):
+            s3(con)
         # Attach to the dataset, read_only.
         con.sql(f"attach '{file}' as ds (read_only true)")
         #        msgs=msgs+f"- :white_check_mark: Attached to: {file}\n"

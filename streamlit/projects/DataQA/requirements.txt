@@ -2,4 +2,6 @@ dynaconf
 duckdb
 wintappy
 streamlit
+fsspec
+s3fs
 
