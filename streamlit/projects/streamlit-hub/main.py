@@ -1,4 +1,5 @@
 import streamlit as st
+from kubernetes.config.config_exception import ConfigException
 from stapp_client import StappClient
 
 st.title("Streamlit Hub")
@@ -6,21 +7,29 @@ st.title("Streamlit Hub")
 stapp_client = StappClient()
 apps = stapp_client.list_streamlit_apps()
 
-for idx, item in enumerate(apps):
-    if item != "hub":
-        st.divider()
-        with st.container():
-            name = item
-            st.write(f"Name: {name}")
-            #TODO: Get this from a configmap or something, should be specified on the helm install
-            st.write(f"URL: https://{name}-streamlit.<YOURDOMAIN>")
-            if st.button(f"Restart app {name}"):
-                stapp_client.delete_pod_for_streamlit_app(name)
-                st.write("Restarting app...")
-            if st.button(f"DANGER!!!: Delete {name}"):
-                stapp_client.delete_streamlit_app(name)
-                st.write(f"Deleted {name}")
-                st.write("Make take a minute or two to clear from UI")
+apps = None
+try:
+    stapp_client = StappClient()
+    apps = stapp_client.list_streamlit_apps()
+except ConfigException:
+    st.error("Can't connect to k8s")
+
+if apps:
+    for idx, item in enumerate(apps):
+        if item != "hub":
+            st.divider()
+            with st.container():
+                name = item
+                st.write(f"Name: {name}")
+                #TODO: Get this from a configmap or something, should be specified on the helm install
+                st.write(f"URL: https://{name}-streamlit.<YOURDOMAIN>")
+                if st.button(f"Restart app {name}"):
+                    stapp_client.delete_pod_for_streamlit_app(name)
+                    st.write("Restarting app...")
+                if st.button(f"DANGER!!!: Delete {name}"):
+                    stapp_client.delete_streamlit_app(name)
+                    st.write(f"Deleted {name}")
+                    st.write("Make take a minute or two to clear from UI")
 
 
 
@@ -32,7 +41,7 @@ with st.sidebar:
     app_name = st.text_input("App Name (EX: my-app)")
     repo = st.text_input("Git Repo URL (EX: git@bitbucket.org\:<YOURCOMPANY>/<YOURPROJECT>.git)")
     username = st.text_input("Git Username")
-    password = st.password("Password")
+    password = st.text_input("Password", type="password")
     branch = st.text_input("Git Branch (EX: feature/my-dev-branch)")
     code_dir = st.text_input("Code Directory (EX: src/streamlit-app)")
 
