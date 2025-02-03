@@ -17,6 +17,7 @@ class Dataset:
     # Note: if needed in the future, this could be mondified to handle multiple FS types.
     # Couldn't find a common interface or class for filesystems? Seems odd..
     fs: ClassVar[object] = None
+    protocol: ClassVar[str] = None
     # Instance vars
     name: str
     path: str
@@ -31,12 +32,13 @@ class Dataset:
     def getfs(cls, path):
         if cls.fs == None:
             logging.debug(f"Guessing filesystem: {path}")
-            # Strip the protocol off and create the FS with that.
-            protocol = path.split(':')[0]
-            if protocol == None:
-                # Assume its "file"
-                protocol = "file"
-            cls.fs = fsspec.filesystem(protocol)
+            if path.startswith('/'):
+                # Must be local
+                cls.protocol="file"
+            else:
+                # Strip the protocol off and create the FS with that.
+                cls.protocol = path.split(':')[0]
+            cls.fs = fsspec.filesystem(cls.protocol)
         return cls.fs
 
     @classmethod
@@ -58,7 +60,11 @@ class Dataset:
         )
 
     def getdb(self, dbname):
-        return f"s3://{dbname}"
+        # This path is for DuckDB, so add the protocol back in if needed.
+        if self.protocol == "s3":
+            return f"s3://{dbname}"
+        else:
+            return dbname
 
 
 def finddatasets(path):

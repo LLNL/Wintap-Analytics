@@ -1,5 +1,6 @@
 import common.dqautil as du
 import streamlit as st
+import traceback
 from utils.config import settings
 import pages.pages as pages
 
@@ -27,7 +28,12 @@ def sidebar_config(pages,logo=settings.app.logo, logo_width=120):
     # Add all pages to the sidebar. They'll be listed in the order added.
     for page in pages:
         st.sidebar.page_link(page.filename, label=page.label)
-    sidebar_db_chooser()
+    try:
+        sidebar_db_chooser()
+    except IOError as error:
+        markdown = f"## Error opening datapath: {settings.datasets.dataset_path}\n\n{error}\n\n```\n{traceback.format_exc()}```\n"
+        st.error(markdown)
+        print(markdown)
 
 
 def change_cur_ds():
@@ -74,12 +80,14 @@ def sidebar_db_chooser():
                     curdb_idx = list(
                         get_allds()[st.session_state.curds].databases
                     ).index(st.session_state.curdb)
+                # format_func is to display just the filename, rather than full path. Full path still returns as value
                 st.selectbox(
                     "Database: ",
                     get_allds()[st.session_state.curds].databases,
                     index=curdb_idx,
                     key="_curdb",
                     on_change=change_cur_db,
+                    format_func=lambda x: x.split("/")[-1]
                 )
 
 
