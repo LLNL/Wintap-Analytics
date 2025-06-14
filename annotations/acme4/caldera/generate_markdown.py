@@ -1,6 +1,5 @@
 import json
 import sys
-from datetime import datetime
 import base64
 import binascii
 from mdutils.mdutils import MdUtils
@@ -91,7 +90,7 @@ def steps(data, hostmap, markdown):
 def main():
     # Check if a file path is provided as a command-line argument
     if len(sys.argv) < 2:
-        print("Usage: python extract_ids_from_reports.py <path_to_json_file>")
+        print("Usage: python generate_markdown.py <path_to_json_file>")
         sys.exit(1)
 
     json_file_path = sys.argv[1]
@@ -107,8 +106,7 @@ def main():
     # Get the operation name, sanitize it, and convert to lowercase
     operation_name = data['name'].replace(' ', '_').replace('/', '_').replace('\\', '_').lower()
 
-    # Create an Everest TKP file with the operation name and a formatted timestamp in the filename
-    tkp = f"{operation_name}_caldera_report.tkp"
+    # Create a markdown file with the operation name and a formatted timestamp in the filename
     markdown = MdUtils(file_name=f"reports/{operation_name}_caldera_report.md",title=data['name'])
     hostmap = hosts(data, markdown)
     steps(data, hostmap, markdown)
